@@ -69,18 +69,17 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> list:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
-    Get the command to execute the code.
+    Get the list of commands to execute the code.
     :param lang: Programming language.
     :param code_file: Path to the code file.
-    :return: Execution command.
+    :return: List of execution commands.
     """
     if lang == SupportedLanguage.PYTHON:
         return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
-        class_name = code_file.split('.')[0]
-        return [f"java {class_name}"]
+        return [f"java {code_file}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
         return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
@@ -136,7 +135,7 @@ def run_code_in_docker(lang: str, code: str, libraries: List[str] = None):
 if __name__ == "__main__":
     run_code_in_docker("python", "print('Hello, World!')")
     run_code_in_docker("java", """
-    public class Main {
+    public class code {
         public static void main(String[] args) {
             System.out.println("Hello, World!");
         }
