@@ -66,24 +66,24 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> str:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
     Get the command to execute the code
     :param lang: Programming language
     :param code_file: Path to the code file
-    :return: Execution command as a formatted string
+    :return: List of execution commands
     """
     if lang == SupportedLanguage.PYTHON:
-        return f"python {code_file}"
+        return ["python", code_file]
     elif lang == SupportedLanguage.JAVA:
-        return f"java {code_file}"
+        return ["javac", code_file, "&&", "java", code_file.split('.')[0]]
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return f"node {code_file}"
+        return ["node", code_file]
     elif lang == SupportedLanguage.CPP:
-        return f"g++ {code_file} -o a.out && ./a.out"
+        return ["g++", code_file, "-o", "a.out", "&&", "./a.out"]
     elif lang == SupportedLanguage.GO:
-        return f"go run {code_file}"
+        return ["go", "run", code_file]
     elif lang == SupportedLanguage.RUBY:
-        return f"ruby {code_file}"
+        return ["ruby", code_file]
     else:
         raise ValueError(f"Language {lang} is not supported")
