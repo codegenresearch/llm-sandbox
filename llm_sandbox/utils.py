@@ -8,10 +8,10 @@ from llm_sandbox.const import SupportedLanguage
 def image_exists(client: DockerClient, image: str) -> bool:
     """
     Check if a Docker image exists.
-    
-    :param client: Docker client instance.
-    :param image: Name of the Docker image to check.
-    :return: True if the image exists, False otherwise.
+
+    :param client: Docker client
+    :param image: Docker image
+    :return: True if the image exists, False otherwise
     """
     try:
         client.images.get(image)
@@ -25,10 +25,10 @@ def image_exists(client: DockerClient, image: str) -> bool:
 def get_libraries_installation_command(lang: str, libraries: List[str]) -> Optional[str]:
     """
     Get the command to install libraries for the given language.
-    
-    :param lang: Programming language.
-    :param libraries: List of libraries to install.
-    :return: Installation command as a string.
+
+    :param lang: Programming language
+    :param libraries: List of libraries
+    :return: Installation command
     """
     if lang == SupportedLanguage.PYTHON:
         return f"pip install {' '.join(libraries)}"
@@ -49,9 +49,9 @@ def get_libraries_installation_command(lang: str, libraries: List[str]) -> Optio
 def get_code_file_extension(lang: str) -> str:
     """
     Get the file extension for the given language.
-    
-    :param lang: Programming language.
-    :return: File extension as a string.
+
+    :param lang: Programming language
+    :return: File extension
     """
     if lang == SupportedLanguage.PYTHON:
         return "py"
@@ -69,25 +69,25 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> str:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
     Get the command to execute the code.
-    
-    :param lang: Programming language.
-    :param code_file: Path to the code file.
-    :return: Execution command as a string.
+
+    :param lang: Programming language
+    :param code_file: Path to the code file
+    :return: List of execution commands
     """
     if lang == SupportedLanguage.PYTHON:
-        return f"python {code_file}"
+        return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
-        return f"java {code_file}"
+        return [f"javac {code_file}", f"java {'.'.join(code_file.split('.')[:-1])}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return f"node {code_file}"
+        return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
-        return f"./{code_file}"
+        return [f"g++ {code_file} -o {code_file.split('.')[0]}", f"./{code_file.split('.')[0]}"]
     elif lang == SupportedLanguage.GO:
-        return f"go run {code_file}"
+        return [f"go run {code_file}"]
     elif lang == SupportedLanguage.RUBY:
-        return f"ruby {code_file}"
+        return [f"ruby {code_file}"]
     else:
         raise ValueError(f"Language {lang} is not supported")
