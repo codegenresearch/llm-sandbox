@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -127,7 +127,7 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None) -> Tuple[int, str]:
+    def run(self, code: str, libraries: Optional[List] = None):
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -178,7 +178,7 @@ class SandboxSession:
             # Check if the directory already exists
             check_dir_command = f"test -d {directory} || echo 'not found'"
             result = self.execute_command(check_dir_command)
-            if "not found" in result[1]:
+            if "not found" in result:
                 self.container.exec_run(f"mkdir -p {directory}")
                 if self.verbose:
                     print(f"Creating directory {self.container.short_id}:{directory}")
@@ -193,7 +193,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]) -> Tuple[int, str]:
+    def execute_command(self, command: Optional[str]) -> str:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -217,7 +217,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return exit_code, output
+        return output
 
     def compile_cpp_code(self, code: str) -> str:
         if self.lang != SupportedLanguage.CPP:
