@@ -7,7 +7,7 @@ def run_python_code():
         print(output)
 
         output = session.run(
-            "import numpy as np\nprint(np.random.rand())", 
+            "import numpy as np\nprint(np.random.rand())",
             libraries=["numpy"]
         )
         print(output)
