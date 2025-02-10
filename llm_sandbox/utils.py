@@ -8,10 +8,10 @@ from llm_sandbox.const import SupportedLanguage, DefaultImage
 
 def image_exists(client: DockerClient, image: str) -> bool:
     """
-    Check if a Docker image exists
-    :param client: Docker client
-    :param image: Docker image
-    :return: True if the image exists, False otherwise
+    Check if a Docker image exists.
+    :param client: Docker client instance.
+    :param image: Docker image name.
+    :return: True if the image exists, False otherwise.
     """
     try:
         client.images.get(image)
@@ -24,34 +24,34 @@ def image_exists(client: DockerClient, image: str) -> bool:
 
 def get_libraries_installation_command(
     lang: str, libraries: List[str]
-) -> Optional[str]:
+) -> Optional[List[str]]:
     """
-    Get the command to install libraries for the given language
-    :param lang: Programming language
-    :param libraries: List of libraries
-    :return: Installation command
+    Get the command to install libraries for the given language.
+    :param lang: Programming language.
+    :param libraries: List of libraries to install.
+    :return: List of installation commands.
     """
     if lang == SupportedLanguage.PYTHON:
-        return f"pip install {' '.join(libraries)}"
+        return [f"pip install {' '.join(libraries)}"]
     elif lang == SupportedLanguage.JAVA:
-        return f"mvn install:install-file -Dfile={' '.join(libraries)}"
+        return [f"mvn install:install-file -Dfile={' '.join(libraries)}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return f"yarn add {' '.join(libraries)}"
+        return [f"yarn add {' '.join(libraries)}"]
     elif lang == SupportedLanguage.CPP:
-        return f"apt-get update && apt-get install -y {' '.join(libraries)}"
+        return [f"apt-get install {' '.join(libraries)}"]
     elif lang == SupportedLanguage.GO:
-        return f"go get {' '.join(libraries)}"
+        return [f"go get {' '.join(libraries)}"]
     elif lang == SupportedLanguage.RUBY:
-        return f"gem install {' '.join(libraries)}"
+        return [f"gem install {' '.join(libraries)}"]
     else:
         raise ValueError(f"Language {lang} is not supported")
 
 
 def get_code_file_extension(lang: str) -> str:
     """
-    Get the file extension for the given language
-    :param lang: Programming language
-    :return: File extension
+    Get the file extension for the given language.
+    :param lang: Programming language.
+    :return: File extension.
     """
     if lang == SupportedLanguage.PYTHON:
         return "py"
@@ -69,25 +69,27 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> str:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
-    Get the command to execute the code
-    :param lang: Programming language
-    :param code_file: Path to the code file
-    :return: Execution command
+    Get the command to execute the code.
+    :param lang: Programming language.
+    :param code_file: Path to the code file.
+    :return: List of execution commands.
     """
     if lang == SupportedLanguage.PYTHON:
-        return f"python {code_file}"
+        return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
-        return f"javac {code_file} && java {'.'.join(code_file.split('.')[:-1])}"
+        class_name = code_file.split('.')[0]
+        return [f"javac {code_file}", f"java {class_name}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return f"node {code_file}"
+        return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
-        return f"g++ {code_file} -o {code_file.split('.')[0]} && ./{code_file.split('.')[0]}"
+        executable_name = code_file.split('.')[0]
+        return [f"g++ {code_file} -o {executable_name}", f"./{executable_name}"]
     elif lang == SupportedLanguage.GO:
-        return f"go run {code_file}"
+        return [f"go run {code_file}"]
     elif lang == SupportedLanguage.RUBY:
-        return f"ruby {code_file}"
+        return [f"ruby {code_file}"]
     else:
         raise ValueError(f"Language {lang} is not supported")
 
@@ -112,12 +114,12 @@ def run_code_in_docker(lang: str, code: str, libraries: List[str] = None):
     ]
 
     if libraries:
-        install_command = get_libraries_installation_command(lang, libraries)
-        if install_command:
-            commands.append(install_command)
+        install_commands = get_libraries_installation_command(lang, libraries)
+        if install_commands:
+            commands.extend(install_commands)
 
-    execute_command = get_code_execution_command(lang, code_file_name)
-    commands.append(execute_command)
+    execute_commands = get_code_execution_command(lang, code_file_name)
+    commands.extend(execute_commands)
 
     container = client.containers.run(
         image,
