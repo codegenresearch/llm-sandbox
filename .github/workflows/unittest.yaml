@@ -24,4 +24,4 @@ jobs:
 
       - name: Run unittests
         run: |
-          poetry run python -m unittest discover -s tests -v
+          poetry run pytest tests -vv
