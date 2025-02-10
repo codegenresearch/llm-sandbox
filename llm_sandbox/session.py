@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -126,7 +126,7 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None):
+    def run(self, code: str, libraries: Optional[List] = None) -> str:
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -150,7 +150,8 @@ class SandboxSession:
         output = ""
 
         for command in execution_commands:
-            output += self.execute_command(command)
+            exit_code, command_output = self.execute_command(command)
+            output += command_output
 
         return output
 
@@ -181,7 +182,7 @@ class SandboxSession:
         if directory:
             # Check if the directory exists
             exists_command = f"test -d {directory} || echo 'not_exists'"
-            result = self.execute_command(exists_command)
+            exit_code, result = self.execute_command(exists_command)
             if "not_exists" in result:
                 self.container.exec_run(f"mkdir -p {directory}")
                 if self.verbose:
@@ -197,7 +198,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]) -> str:
+    def execute_command(self, command: str) -> Tuple[int, str]:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -221,7 +222,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return output
+        return exit_code, output
 
     def __enter__(self):
         self.open()
