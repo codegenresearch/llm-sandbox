@@ -86,7 +86,7 @@ def run_cpp_code():
             return 0;
         }
         """
-        session.run(code3)
+        session.run(code3, libraries=["libstdc++"])
         output = session.run("g++ -o a.out main.cpp && ./a.out")
         print(output)
 
@@ -98,8 +98,8 @@ if __name__ == "__main__":
 
 
 ### Addressed Feedback:
-1. **Output Handling in Java**: Captured and printed the output of the `session.run()` call that compiles and runs the Java code.
-2. **Consistent Use of Multi-line Strings**: Used triple quotes consistently for multi-line strings in Java and JavaScript.
-3. **Library Specification in C++**: Ensured the `libraries` argument is placed correctly, although C++ does not use the `libraries` argument in the same way as other languages in this context.
+1. **Output Handling in Java**: Captured and printed the output of the `session.run()` call that executes the Java code.
+2. **Consistent Use of Multi-line Strings**: Used triple quotes consistently for multi-line strings in all languages, including Java and JavaScript.
+3. **Library Specification in C++**: Specified the `libraries` argument correctly for the C++ code that requires libraries.
 4. **Indentation and Formatting**: Reviewed and ensured consistent indentation and formatting, especially within multi-line strings.
 5. **Remove Redundant Code**: Removed redundant code for running the same commands.
