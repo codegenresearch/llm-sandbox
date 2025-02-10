@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -127,13 +127,12 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None):
+    def run(self, code: str, libraries: Optional[List] = None) -> Tuple[int, str]:
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
             )
 
-        commands = []
         if libraries:
             if self.lang.upper() in NotSupportedLibraryInstallation:
                 raise ValueError(
@@ -141,7 +140,8 @@ class SandboxSession:
                 )
 
             command = get_libraries_installation_command(self.lang, libraries)
-            commands.append(command)
+            self.execute_command(command)
+            self.commands.append(command)
 
         code_file = f"/tmp/code.{get_code_file_extension(self.lang)}"
         with open(code_file, "w") as f:
@@ -149,15 +149,8 @@ class SandboxSession:
 
         self.copy_to_runtime(code_file, code_file)
         execution_command = get_code_execution_command(self.lang, code_file)
-        commands.append(execution_command)
-
-        outputs = []
-        for command in commands:
-            result = self.execute_command(command)
-            outputs.append(result)
-
-        self.commands.extend(commands)
-        return outputs
+        self.commands.append(execution_command)
+        return self.execute_command(execution_command)
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -183,16 +176,20 @@ class SandboxSession:
             )
 
         directory = os.path.dirname(dest)
+        is_created_dir = False
         if directory:
             # Check if the directory exists
             exists_command = f"test -d {directory} || echo 'not_exists'"
             result = self.execute_command(exists_command)
             if "not_exists" in result:
                 self.container.exec_run(f"mkdir -p {directory}")
+                is_created_dir = True
                 if self.verbose:
                     print(f"Creating directory {self.container.short_id}:{directory}")
 
         if self.verbose:
+            if is_created_dir:
+                print(f"Directory {self.container.short_id}:{directory} created.")
             print(f"Copying {src} to {self.container.short_id}:{dest}..")
 
         tarstream = io.BytesIO()
@@ -202,7 +199,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]):
+    def execute_command(self, command: Optional[str]) -> Tuple[int, str]:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -214,7 +211,7 @@ class SandboxSession:
         if self.verbose:
             print(f"Executing command: {command}")
 
-        _, exec_log = self.container.exec_run(command, stream=True)
+        exit_code, exec_log = self.container.exec_run(command, stream=True)
         output = ""
 
         if self.verbose:
@@ -226,7 +223,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return output
+        return exit_code, output
 
     def get_commands(self) -> List[str]:
         return self.commands
