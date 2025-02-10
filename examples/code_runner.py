@@ -1,10 +1,8 @@
 from llm_sandbox import SandboxSession
-from llm_sandbox.utils import get_libraries_installation_command, get_code_execution_command
-from llm_sandbox.const import SupportedLanguage
 
 
 def run_python_code():
-    with SandboxSession(lang=SupportedLanguage.PYTHON, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="python", keep_template=True, verbose=True) as session:
         output = session.run("print('Hello, World!')")
         print(output)
 
@@ -14,8 +12,7 @@ def run_python_code():
         )
         print(output)
 
-        install_command = get_libraries_installation_command(SupportedLanguage.PYTHON, ["pandas"])
-        session.execute_command(install_command)
+        session.execute_command("pip install pandas")
         output = session.run("import pandas as pd\nprint(pd.__version__)")
         print(output)
 
@@ -23,7 +20,7 @@ def run_python_code():
 
 
 def run_java_code():
-    with SandboxSession(lang=SupportedLanguage.JAVA, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="java", keep_template=True, verbose=True) as session:
         output = session.run(
             """
             public class Main {
@@ -37,7 +34,7 @@ def run_java_code():
 
 
 def run_javascript_code():
-    with SandboxSession(lang=SupportedLanguage.JAVASCRIPT, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="javascript", keep_template=True, verbose=True) as session:
         output = session.run("console.log('Hello, World!')")
         print(output)
 
@@ -53,7 +50,7 @@ def run_javascript_code():
 
 
 def run_cpp_code():
-    with SandboxSession(lang=SupportedLanguage.CPP, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="cpp", keep_template=True, verbose=True) as session:
         output = session.run(
             """
             #include <iostream>
@@ -103,7 +100,7 @@ def run_cpp_code():
 
 
 if __name__ == "__main__":
-    # run_python_code()
-    # run_java_code()
-    # run_javascript_code()
+    run_python_code()
+    run_java_code()
+    run_javascript_code()
     run_cpp_code()
