@@ -46,7 +46,6 @@ def run_javascript_code():
         axios.get('https://jsonplaceholder.typicode.com/posts/1')
             .then(response => console.log(response.data));
         """
-        session.execute_command("yarn add axios")
         output = session.run(code, libraries=["axios"])
         print(output)
 
