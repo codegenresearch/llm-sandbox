@@ -28,8 +28,7 @@ def run_java_code():
             }
         }
         """
-        session.run(code)
-        output = session.run("Main")
+        output = session.run(code)
         print(output)
 
 
@@ -57,8 +56,7 @@ def run_cpp_code():
             return 0;
         }
         """
-        session.run(code)
-        output = session.run(code)
+        output = session.run(code, libraries=["libstdc++"])
         print(output)
 
         code = """
@@ -73,8 +71,7 @@ def run_cpp_code():
             return 0;
         }
         """
-        session.run(code)
-        output = session.run(code)
+        output = session.run(code, libraries=["libstdc++"])
         print(output)
 
         code = """
@@ -91,13 +88,12 @@ def run_cpp_code():
             return 0;
         }
         """
-        session.run(code, libraries=["libstdc++"])
-        output = session.run(code)
+        output = session.run(code, libraries=["libstdc++"])
         print(output)
 
 
 if __name__ == "__main__":
-    # run_python_code()
-    # run_java_code()
-    # run_javascript_code()
+    run_python_code()
+    run_java_code()
+    run_javascript_code()
     run_cpp_code()
