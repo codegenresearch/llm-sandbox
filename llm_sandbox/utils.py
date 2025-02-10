@@ -24,25 +24,25 @@ def image_exists(client: DockerClient, image: str) -> bool:
 
 def get_libraries_installation_command(
     lang: str, libraries: List[str]
-) -> Optional[List[str]]:
+) -> Optional[str]:
     """
     Get the command to install libraries for the given language.
     :param lang: Programming language.
     :param libraries: List of libraries to install.
-    :return: List of installation commands.
+    :return: Installation command.
     """
     if lang == SupportedLanguage.PYTHON:
-        return [f"pip install {' '.join(libraries)}"]
+        return f"pip install {' '.join(libraries)}"
     elif lang == SupportedLanguage.JAVA:
-        return [f"mvn install:install-file -Dfile={' '.join(libraries)}"]
+        return f"mvn install:install-file -Dfile={' '.join(libraries)}"
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return [f"yarn add {' '.join(libraries)}"]
+        return f"yarn add {' '.join(libraries)}"
     elif lang == SupportedLanguage.CPP:
-        return [f"apt-get install {' '.join(libraries)}"]
+        return f"apt-get install {' '.join(libraries)}"
     elif lang == SupportedLanguage.GO:
-        return [f"go get {' '.join(libraries)}"]
+        return f"go get {' '.join(libraries)}"
     elif lang == SupportedLanguage.RUBY:
-        return [f"gem install {' '.join(libraries)}"]
+        return f"gem install {' '.join(libraries)}"
     else:
         raise ValueError(f"Language {lang} is not supported")
 
@@ -84,8 +84,7 @@ def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     elif lang == SupportedLanguage.JAVASCRIPT:
         return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
-        executable_name = code_file.split('.')[0]
-        return [f"g++ {code_file} -o {executable_name}", f"./{executable_name}"]
+        return [f"g++ {code_file} -o a.out", f"./a.out"]
     elif lang == SupportedLanguage.GO:
         return [f"go run {code_file}"]
     elif lang == SupportedLanguage.RUBY:
@@ -114,9 +113,9 @@ def run_code_in_docker(lang: str, code: str, libraries: List[str] = None):
     ]
 
     if libraries:
-        install_commands = get_libraries_installation_command(lang, libraries)
-        if install_commands:
-            commands.extend(install_commands)
+        install_command = get_libraries_installation_command(lang, libraries)
+        if install_command:
+            commands.append(install_command)
 
     execute_commands = get_code_execution_command(lang, code_file_name)
     commands.extend(execute_commands)
