@@ -75,19 +75,18 @@ def get_code_file_extension(lang: str) -> str:
 def get_code_execution_command(
     lang: str,
     code_file: str
-) -> list:
+) -> List[str]:
     """
     Get the command to execute the code.
 
     :param lang: Programming language
     :param code_file: Path to the code file
-    :return: Execution command
+    :return: List of execution commands
     """
     if lang == SupportedLanguage.PYTHON:
         return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
-        class_name = code_file.split('.')[0]
-        return [f"javac {code_file}", f"java {class_name}"]
+        return [f"java {code_file}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
         return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
