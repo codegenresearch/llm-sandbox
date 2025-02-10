@@ -19,7 +19,7 @@ def image_exists(client: DockerClient, image: str) -> bool:
     except docker.errors.ImageNotFound:
         return False
     except Exception as e:
-        raise e
+        raise ValueError(f"An error occurred: {e}")
 
 
 def get_libraries_installation_command(
@@ -69,7 +69,7 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> List[str]:
+def get_code_execution_command(lang: str, code_file: str) -> list:
     """
     Get the list of commands to execute the code.
     :param lang: Programming language.
@@ -79,7 +79,7 @@ def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     if lang == SupportedLanguage.PYTHON:
         return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
-        return [f"java {code_file}"]
+        return [f"javac {code_file}", f"java {'.'.join(code_file.split('.')[:-1])}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
         return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
