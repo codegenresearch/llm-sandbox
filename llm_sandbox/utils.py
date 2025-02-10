@@ -1,6 +1,6 @@
 import docker
 import docker.errors
-from typing import List, Optional
+from typing import list, Optional
 import os
 from docker import DockerClient
 from llm_sandbox.const import SupportedLanguage, DefaultImage
@@ -23,7 +23,7 @@ def image_exists(client: DockerClient, image: str) -> bool:
 
 
 def get_libraries_installation_command(
-    lang: str, libraries: List[str]
+    lang: str, libraries: list
 ) -> Optional[str]:
     """
     Get the command to install libraries for the given language.
@@ -69,7 +69,7 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> List[str]:
+def get_code_execution_command(lang: str, code_file: str) -> list:
     """
     Get the command to execute the code.
     :param lang: Programming language.
@@ -80,7 +80,7 @@ def get_code_execution_command(lang: str, code_file: str) -> List[str]:
         return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
         class_name = code_file.split('.')[0]
-        return [f"javac {code_file}", f"java {class_name}"]
+        return [f"java {class_name}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
         return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
@@ -93,7 +93,7 @@ def get_code_execution_command(lang: str, code_file: str) -> List[str]:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def run_code_in_docker(lang: str, code: str, libraries: List[str] = None):
+def run_code_in_docker(lang: str, code: str, libraries: list = None):
     client = docker.from_env()
     image = DefaultImage.__dict__.get(lang.upper())
     if not image:
