@@ -4,19 +4,17 @@ import docker
 import tarfile
 from typing import List, Optional, Union
 
-from docker.models.images import Image
-from docker.models.containers import Container
-from llm_sandbox.const import (
-    SupportedLanguage,
-    SupportedLanguageValues,
-    DefaultImage,
-    NotSupportedLibraryInstallation,
-)
 from llm_sandbox.utils import (
     image_exists,
     get_libraries_installation_command,
     get_code_file_extension,
     get_code_execution_command,
+)
+from llm_sandbox.const import (
+    SupportedLanguage,
+    SupportedLanguageValues,
+    DefaultImage,
+    NotSupportedLibraryInstallation,
 )
 
 
@@ -95,7 +93,6 @@ class SandboxSession:
 
     def close(self):
         if self.container:
-            container_id = self.container.id
             if isinstance(self.image, Image):
                 self.container.commit(self.image.tags[-1])
 
@@ -148,11 +145,10 @@ class SandboxSession:
 
         self.copy_to_runtime(code_file, code_file)
         commands = get_code_execution_command(self.lang, code_file)
-        results = []
+        output = None
         for command in commands:
-            result = self.execute_command(command)
-            results.append(result)
-        return results
+            output = self.execute_command(command)
+        return (0, output)
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
