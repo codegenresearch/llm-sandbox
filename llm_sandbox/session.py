@@ -126,7 +126,7 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None) -> Tuple[int, str]:
+    def run(self, code: str, libraries: Optional[List] = None):
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -151,8 +151,10 @@ class SandboxSession:
         exit_code = 0
 
         for command in execution_commands:
-            result = self.execute_command(command)
+            current_exit_code, result = self.execute_command(command)
             output += result
+            if current_exit_code != 0:
+                exit_code = current_exit_code
 
         return exit_code, output
 
@@ -183,7 +185,7 @@ class SandboxSession:
         if directory:
             # Check if the directory exists
             exists_command = f"test -d {directory} || echo 'not_exists'"
-            result = self.execute_command(exists_command)
+            exit_code, result = self.execute_command(exists_command)
             if "not_exists" in result:
                 self.container.exec_run(f"mkdir -p {directory}")
                 if self.verbose:
@@ -199,7 +201,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]) -> str:
+    def execute_command(self, command: Optional[str]) -> Tuple[int, str]:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -223,7 +225,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return output
+        return exit_code, output
 
     def __enter__(self):
         self.open()
