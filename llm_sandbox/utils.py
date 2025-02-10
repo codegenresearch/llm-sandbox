@@ -1,7 +1,5 @@
 import docker
-import docker.errors
 from typing import List, Optional
-import os
 from docker import DockerClient
 from llm_sandbox.const import SupportedLanguage, DefaultImage
 
@@ -19,7 +17,7 @@ def image_exists(client: DockerClient, image: str) -> bool:
     except docker.errors.ImageNotFound:
         return False
     except Exception as e:
-        raise ValueError(f"An error occurred: {e}")
+        raise e
 
 
 def get_libraries_installation_command(
@@ -69,7 +67,7 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> list:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
     Get the list of commands to execute the code.
     :param lang: Programming language.
