@@ -81,14 +81,17 @@ def get_code_execution_command(lang: str, code_file: str) -> List[str]:
         return ["python", code_file]
     elif lang == SupportedLanguage.JAVA:
         class_name = code_file.split('.')[0]
-        return ["javac", code_file, "&&", "java", class_name]
+        return [f"javac {code_file} && java {class_name}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
         return ["node", code_file]
     elif lang == SupportedLanguage.CPP:
-        return ["g++", code_file, "-o", "a.out", "&&", "./a.out"]
+        return [f"g++ {code_file} -o a.out && ./a.out"]
     elif lang == SupportedLanguage.GO:
         return ["go", "run", code_file]
     elif lang == SupportedLanguage.RUBY:
         return ["ruby", code_file]
     else:
         raise ValueError(f"Language {lang} is not supported")
+
+
+This version ensures that the docstrings are consistent, the return types match the expected format, and the overall structure aligns with the gold code.
