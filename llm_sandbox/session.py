@@ -12,7 +12,12 @@ from llm_sandbox.utils import (
     get_code_file_extension,
     get_code_execution_command,
 )
-from llm_sandbox.const import SupportedLanguage, SupportedLanguageValues, DefaultImage, NotSupportedLibraryInstallation
+from llm_sandbox.const import (
+    SupportedLanguage,
+    SupportedLanguageValues,
+    DefaultImage,
+    NotSupportedLibraryInstallation,
+)
 
 
 class SandboxSession:
@@ -136,7 +141,6 @@ class SandboxSession:
                 )
 
             command = get_libraries_installation_command(self.lang, libraries)
-            self.execute_command(command)
             commands.append(command)
 
         code_file = f"/tmp/code.{get_code_file_extension(self.lang)}"
@@ -145,10 +149,15 @@ class SandboxSession:
 
         self.copy_to_runtime(code_file, code_file)
         execution_command = get_code_execution_command(self.lang, code_file)
-        result = self.execute_command(execution_command)
         commands.append(execution_command)
+
+        outputs = []
+        for command in commands:
+            result = self.execute_command(command)
+            outputs.append(result)
+
         self.commands.extend(commands)
-        return result
+        return outputs
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -173,15 +182,17 @@ class SandboxSession:
                 "Session is not open. Please call open() method before copying files."
             )
 
-        is_created_dir = False
         directory = os.path.dirname(dest)
         if directory:
-            self.container.exec_run(f"mkdir -p {directory}")
-            is_created_dir = True
+            # Check if the directory exists
+            exists_command = f"test -d {directory} || echo 'not_exists'"
+            result = self.execute_command(exists_command)
+            if "not_exists" in result:
+                self.container.exec_run(f"mkdir -p {directory}")
+                if self.verbose:
+                    print(f"Creating directory {self.container.short_id}:{directory}")
 
         if self.verbose:
-            if is_created_dir:
-                print(f"Creating directory {self.container.short_id}:{directory}")
             print(f"Copying {src} to {self.container.short_id}:{dest}..")
 
         tarstream = io.BytesIO()
