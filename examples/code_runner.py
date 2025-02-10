@@ -3,17 +3,20 @@ from llm_sandbox import SandboxSession
 
 def run_python_code():
     with SandboxSession(lang="python", keep_template=True, verbose=True) as session:
-        output = session.run("print('Hello, World!')")
+        code = "print('Hello, World!')"
+        output = session.run(code)
         print(output)
 
-        output = session.run(
-            "import numpy as np\nprint(np.random.rand())",
-            libraries=["numpy"]
-        )
+        code = """
+        import numpy as np
+        print(np.random.rand())
+        """
+        output = session.run(code, libraries=["numpy"])
         print(output)
 
         session.execute_command("pip install pandas")
-        output = session.run("import pandas as pd\nprint(pd.__version__)")
+        code = "import pandas as pd\nprint(pd.__version__)"
+        output = session.run(code)
         print(output)
 
         session.copy_to_runtime("README.md", "/sandbox/data.csv")
@@ -34,7 +37,8 @@ def run_java_code():
 
 def run_javascript_code():
     with SandboxSession(lang="javascript", keep_template=True, verbose=True) as session:
-        output = session.run("console.log('Hello, World!')")
+        code = "console.log('Hello, World!')"
+        output = session.run(code)
         print(output)
 
         code = """
