@@ -52,7 +52,6 @@ class SandboxSession:
         self.keep_template = keep_template
         self.is_create_template: bool = False
         self.verbose = verbose
-        self.commands: List[str] = []
 
     def open(self):
         warning_str = (
@@ -72,7 +71,6 @@ class SandboxSession:
                 tag="sandbox",
             )
             self.is_create_template = True
-            self.commands.append(f"docker build -t sandbox -f {self.dockerfile} {self.path}")
 
         if isinstance(self.image, str):
             if not image_exists(self.client, self.image):
@@ -83,23 +81,21 @@ class SandboxSession:
 
                 self.image = self.client.images.pull(self.image)
                 self.is_create_template = True
-                self.commands.append(f"docker pull {self.image}")
             else:
                 self.image = self.client.images.get(self.image)
                 if self.verbose:
                     print(f"Using image {self.image.tags[-1]}")
 
         self.container = self.client.containers.run(self.image, detach=True, tty=True)
-        self.commands.append(f"docker run -d -t {self.image}")
 
     def close(self):
         if self.container:
+            container_id = self.container.id
             if isinstance(self.image, Image):
                 self.container.commit(self.image.tags[-1])
 
             self.container.remove(force=True)
             self.container = None
-            self.commands.append(f"docker rm -f {self.container.id}")
 
         if self.is_create_template and not self.keep_template:
             # check if the image is used by any other container
@@ -120,7 +116,6 @@ class SandboxSession:
                     self.image.remove(force=True)
                 else:
                     raise ValueError("Invalid image type")
-                self.commands.append(f"docker rmi {self.image}")
             else:
                 if self.verbose:
                     print(
@@ -173,15 +168,11 @@ class SandboxSession:
                 "Session is not open. Please call open() method before copying files."
             )
 
-        is_created_dir = False
         directory = os.path.dirname(dest)
         if directory:
             self.container.exec_run(f"mkdir -p {directory}")
-            is_created_dir = True
 
         if self.verbose:
-            if is_created_dir:
-                print(f"Creating directory {self.container.short_id}:{directory}")
             print(f"Copying {src} to {self.container.short_id}:{dest}..")
 
         tarstream = io.BytesIO()
@@ -190,7 +181,6 @@ class SandboxSession:
 
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
-        self.commands.append(f"docker cp {src} {self.container.id}:{dest}")
 
     def execute_command(self, command: Optional[str]):
         if not command:
@@ -216,7 +206,6 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        self.commands.append(command)
         return output
 
     def compile_cpp_code(self, code: str):
@@ -231,7 +220,6 @@ class SandboxSession:
         executable_file = "/tmp/code"
         compile_command = f"g++ {code_file} -o {executable_file}"
         self.execute_command(compile_command)
-        self.commands.append(compile_command)
         return executable_file
 
     def __enter__(self):
@@ -240,6 +228,3 @@ class SandboxSession:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-    def get_commands(self) -> List[str]:
-        return self.commands
