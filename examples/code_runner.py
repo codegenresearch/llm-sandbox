@@ -1,5 +1,4 @@
 from llm_sandbox import SandboxSession
-from llm_sandbox.utils import get_libraries_installation_command, get_code_execution_command
 
 def run_python_code():
     with SandboxSession(lang="python", keep_template=True, verbose=True) as session:
@@ -11,9 +10,7 @@ def run_python_code():
         )
         print(output)
 
-        installation_command = get_libraries_installation_command("python", ["pandas"])
-        if installation_command:
-            session.execute_command(installation_command)
+        session.execute_command("pip install pandas")
         output = session.run("import pandas as pd\nprint(pd.__version__)")
         print(output)
 
@@ -28,10 +25,9 @@ def run_java_code():
             }
         }
         """
-        execution_commands = get_code_execution_command("java", code)
-        for command in execution_commands:
-            output = session.run(command)
-            print(output)
+        session.run(code)
+        output = session.run("javac Main.java && java Main")
+        print(output)
 
 def run_javascript_code():
     with SandboxSession(lang="javascript", keep_template=True, verbose=True) as session:
@@ -43,9 +39,7 @@ def run_javascript_code():
         axios.get('https://jsonplaceholder.typicode.com/posts/1')
             .then(response => console.log(response.data));
         """
-        installation_command = get_libraries_installation_command("javascript", ["axios"])
-        if installation_command:
-            session.execute_command(installation_command)
+        session.execute_command("npm install axios")
         output = session.run(code)
         print(output)
 
@@ -58,10 +52,9 @@ def run_cpp_code():
             return 0;
         }
         """
-        execution_commands = get_code_execution_command("cpp", code1)
-        for command in execution_commands:
-            output = session.run(command)
-            print(output)
+        session.run(code1)
+        output = session.run("g++ -o a.out main.cpp && ./a.out")
+        print(output)
         
         code2 = """
         #include <iostream>
@@ -75,10 +68,9 @@ def run_cpp_code():
             return 0;
         }
         """
-        execution_commands = get_code_execution_command("cpp", code2)
-        for command in execution_commands:
-            output = session.run(command)
-            print(output)
+        session.run(code2)
+        output = session.run("g++ -o a.out main.cpp && ./a.out")
+        print(output)
         
         code3 = """
         #include <iostream>
@@ -94,13 +86,9 @@ def run_cpp_code():
             return 0;
         }
         """
-        installation_command = get_libraries_installation_command("cpp", ["libstdc++"])
-        if installation_command:
-            session.execute_command(installation_command)
-        execution_commands = get_code_execution_command("cpp", code3)
-        for command in execution_commands:
-            output = session.run(command)
-            print(output)
+        session.run(code3)
+        output = session.run("g++ -o a.out main.cpp && ./a.out")
+        print(output)
 
 if __name__ == "__main__":
     # run_python_code()
