@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -148,15 +148,11 @@ class SandboxSession:
         self.copy_to_runtime(code_file, code_file)
         execution_commands = get_code_execution_command(self.lang, code_file)
         output = ""
-        exit_code = 0
 
         for command in execution_commands:
-            current_exit_code, result = self.execute_command(command)
-            output += result
-            if current_exit_code != 0:
-                exit_code = current_exit_code
+            output += self.execute_command(command)
 
-        return exit_code, output
+        return output
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -185,7 +181,7 @@ class SandboxSession:
         if directory:
             # Check if the directory exists
             exists_command = f"test -d {directory} || echo 'not_exists'"
-            exit_code, result = self.execute_command(exists_command)
+            result = self.execute_command(exists_command)
             if "not_exists" in result:
                 self.container.exec_run(f"mkdir -p {directory}")
                 if self.verbose:
@@ -201,7 +197,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]) -> Tuple[int, str]:
+    def execute_command(self, command: Optional[str]) -> str:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -225,7 +221,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return exit_code, output
+        return output
 
     def __enter__(self):
         self.open()
