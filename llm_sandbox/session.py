@@ -147,8 +147,12 @@ class SandboxSession:
             f.write(code)
 
         self.copy_to_runtime(code_file, code_file)
-        command = get_code_execution_command(self.lang, code_file)
-        return self.execute_command(command)
+        commands = get_code_execution_command(self.lang, code_file)
+        results = []
+        for command in commands:
+            result = self.execute_command(command)
+            results.append(result)
+        return results
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -193,7 +197,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]) -> str:
+    def execute_command(self, command: Optional[str]):
         if not command:
             raise ValueError("Command cannot be empty")
 
