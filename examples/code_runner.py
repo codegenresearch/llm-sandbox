@@ -44,7 +44,7 @@ def run_javascript_code():
             .then(response => console.log(response.data));
         """
         session.execute_command("yarn add axios")
-        output = session.run(code)
+        output = session.run(code, libraries=["axios"])
         print(output)
 
 
@@ -57,9 +57,8 @@ def run_cpp_code():
             return 0;
         }
         """
-        execution_commands = ["g++ -o a.out main.cpp", "./a.out"]
-        session.run(code, execution_commands=execution_commands)
-        output = session.run(execution_commands=execution_commands)
+        session.run(code)
+        output = session.run(code)
         print(output)
 
         code = """
@@ -74,8 +73,8 @@ def run_cpp_code():
             return 0;
         }
         """
-        session.run(code, execution_commands=execution_commands)
-        output = session.run(execution_commands=execution_commands)
+        session.run(code)
+        output = session.run(code)
         print(output)
 
         code = """
@@ -92,8 +91,8 @@ def run_cpp_code():
             return 0;
         }
         """
-        session.run(code, execution_commands=execution_commands, libraries=["libstdc++"])
-        output = session.run(execution_commands=execution_commands)
+        session.run(code, libraries=["libstdc++"])
+        output = session.run(code)
         print(output)
 
 
