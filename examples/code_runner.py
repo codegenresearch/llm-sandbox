@@ -1,5 +1,4 @@
 from llm_sandbox import SandboxSession
-from llm_sandbox.utils import get_libraries_installation_command, get_code_execution_command
 
 
 def run_python_code():
@@ -13,8 +12,7 @@ def run_python_code():
         )
         print(output)
 
-        install_command = get_libraries_installation_command("python", ["pandas"])
-        session.execute_command(install_command)
+        session.execute_command("pip install pandas")
         output = session.run("import pandas as pd\nprint(pd.__version__)")
         print(output)
 
@@ -30,8 +28,9 @@ def run_java_code():
             }
         }
         """
-        execution_commands = get_code_execution_command("java", "Main.java")
-        session.run(code, execution_commands=execution_commands)
+        session.run(code)
+        output = session.run("Main")
+        print(output)
 
 
 def run_javascript_code():
@@ -44,8 +43,7 @@ def run_javascript_code():
         axios.get('https://jsonplaceholder.typicode.com/posts/1')
             .then(response => console.log(response.data));
         """
-        install_command = get_libraries_installation_command("javascript", ["axios"])
-        session.execute_command(install_command)
+        session.execute_command("yarn add axios")
         output = session.run(code)
         print(output)
 
@@ -59,8 +57,10 @@ def run_cpp_code():
             return 0;
         }
         """
-        execution_commands = get_code_execution_command("cpp", "main.cpp")
+        execution_commands = ["g++ -o a.out main.cpp", "./a.out"]
         session.run(code, execution_commands=execution_commands)
+        output = session.run(execution_commands=execution_commands)
+        print(output)
 
         code = """
         #include <iostream>
@@ -75,6 +75,8 @@ def run_cpp_code():
         }
         """
         session.run(code, execution_commands=execution_commands)
+        output = session.run(execution_commands=execution_commands)
+        print(output)
 
         code = """
         #include <iostream>
@@ -91,6 +93,8 @@ def run_cpp_code():
         }
         """
         session.run(code, execution_commands=execution_commands, libraries=["libstdc++"])
+        output = session.run(execution_commands=execution_commands)
+        print(output)
 
 
 if __name__ == "__main__":
