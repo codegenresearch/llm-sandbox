@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -126,7 +126,7 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None) -> Tuple[int, str]:
+    def run(self, code: str, libraries: Optional[List] = None):
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -139,9 +139,7 @@ class SandboxSession:
                 )
 
             command = get_libraries_installation_command(self.lang, libraries)
-            exit_code, _ = self.execute_command(command)
-            if exit_code != 0:
-                raise RuntimeError(f"Failed to install libraries: {libraries}")
+            self.execute_command(command)
 
         code_file = f"/tmp/code.{get_code_file_extension(self.lang)}"
         with open(code_file, "w") as f:
@@ -152,12 +150,9 @@ class SandboxSession:
         output = ""
 
         for command in execution_commands:
-            exit_code, command_output = self.execute_command(command)
-            output += command_output
-            if exit_code != 0:
-                return exit_code, output
+            output += self.execute_command(command)
 
-        return 0, output
+        return output
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -186,7 +181,7 @@ class SandboxSession:
         if directory:
             # Check if the directory exists
             exists_command = f"test -d {directory} || echo 'not_exists'"
-            exit_code, result = self.execute_command(exists_command)
+            result = self.execute_command(exists_command)
             if "not_exists" in result:
                 self.container.exec_run(f"mkdir -p {directory}")
                 if self.verbose:
@@ -202,7 +197,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: str) -> Tuple[int, str]:
+    def execute_command(self, command: Optional[str]) -> str:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -226,7 +221,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return exit_code, output
+        return output
 
     def __enter__(self):
         self.open()
