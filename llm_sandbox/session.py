@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from docker.models.images import Image
 from docker.models.containers import Container
