@@ -39,8 +39,7 @@ def run_javascript_code():
         axios.get('https://jsonplaceholder.typicode.com/posts/1')
             .then(response => console.log(response.data));
         """
-        session.execute_command("npm install axios")
-        output = session.run(code)
+        output = session.run(code, libraries=["axios"])
         print(output)
 
 def run_cpp_code():
@@ -72,6 +71,7 @@ def run_cpp_code():
         output = session.run("g++ -o a.out main.cpp && ./a.out")
         print(output)
         
+        # Run with libraries
         code3 = """
         #include <iostream>
         #include <vector>
