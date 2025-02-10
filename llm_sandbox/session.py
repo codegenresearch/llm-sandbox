@@ -149,7 +149,7 @@ class SandboxSession:
         output = ""
         for command in commands:
             output = self.execute_command(command)
-        return (0, output)
+        return output
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -218,7 +218,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return exit_code, output
+        return output
 
     def compile_cpp_code(self, code: str) -> str:
         if self.lang != SupportedLanguage.CPP:
