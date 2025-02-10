@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Tuple
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -126,7 +126,7 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None) -> str:
+    def run(self, code: str, libraries: Optional[List] = None) -> Tuple[int, str]:
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -139,7 +139,9 @@ class SandboxSession:
                 )
 
             command = get_libraries_installation_command(self.lang, libraries)
-            self.execute_command(command)
+            exit_code, _ = self.execute_command(command)
+            if exit_code != 0:
+                raise RuntimeError(f"Failed to install libraries: {libraries}")
 
         code_file = f"/tmp/code.{get_code_file_extension(self.lang)}"
         with open(code_file, "w") as f:
@@ -152,8 +154,10 @@ class SandboxSession:
         for command in execution_commands:
             exit_code, command_output = self.execute_command(command)
             output += command_output
+            if exit_code != 0:
+                return exit_code, output
 
-        return output
+        return 0, output
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
