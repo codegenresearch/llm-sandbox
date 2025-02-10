@@ -3,7 +3,8 @@ import os
 import docker
 import tarfile
 from typing import List, Optional, Union
-
+from docker.models.images import Image
+from docker.models.containers import Container
 from llm_sandbox.utils import (
     image_exists,
     get_libraries_installation_command,
@@ -145,7 +146,7 @@ class SandboxSession:
 
         self.copy_to_runtime(code_file, code_file)
         commands = get_code_execution_command(self.lang, code_file)
-        output = None
+        output = ""
         for command in commands:
             output = self.execute_command(command)
         return (0, output)
@@ -217,7 +218,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return output
+        return exit_code, output
 
     def compile_cpp_code(self, code: str) -> str:
         if self.lang != SupportedLanguage.CPP:
