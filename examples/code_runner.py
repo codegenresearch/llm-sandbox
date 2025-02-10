@@ -98,8 +98,8 @@ if __name__ == "__main__":
 
 
 ### Addressed Feedback:
-1. **Consistency in Code Formatting**: Ensured consistent indentation and spacing.
-2. **Output Handling**: Captured and printed the output of each `session.run()` call.
-3. **Use of Multi-line Strings**: Used triple quotes consistently and formatted multi-line strings properly.
-4. **Library Specification**: Ensured the `libraries` argument is placed correctly.
+1. **Output Handling in Java**: Captured and printed the output of the `session.run()` call that compiles and runs the Java code.
+2. **Consistent Use of Multi-line Strings**: Used triple quotes consistently for multi-line strings in Java and JavaScript.
+3. **Library Specification in C++**: Ensured the `libraries` argument is placed correctly, although C++ does not use the `libraries` argument in the same way as other languages in this context.
+4. **Indentation and Formatting**: Reviewed and ensured consistent indentation and formatting, especially within multi-line strings.
 5. **Remove Redundant Code**: Removed redundant code for running the same commands.
