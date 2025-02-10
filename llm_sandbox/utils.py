@@ -22,7 +22,10 @@ def image_exists(client: DockerClient, image: str) -> bool:
         raise e
 
 
-def get_libraries_installation_command(lang: str, libraries: List[str]) -> Optional[str]:
+def get_libraries_installation_command(
+    lang: str,
+    libraries: List[str]
+) -> Optional[str]:
     """
     Get the command to install libraries for the given language.
 
@@ -69,7 +72,10 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> List[str]:
+def get_code_execution_command(
+    lang: str,
+    code_file: str
+) -> list:
     """
     Get the command to execute the code.
 
@@ -80,11 +86,13 @@ def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     if lang == SupportedLanguage.PYTHON:
         return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
-        return [f"javac {code_file}", f"java {'.'.join(code_file.split('.')[:-1])}"]
+        class_name = code_file.split('.')[0]
+        return [f"javac {code_file}", f"java {class_name}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
         return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
-        return [f"g++ {code_file} -o {code_file.split('.')[0]}", f"./{code_file.split('.')[0]}"]
+        output_name = code_file.split('.')[0]
+        return [f"g++ {code_file} -o {output_name}", f"./{output_name}"]
     elif lang == SupportedLanguage.GO:
         return [f"go run {code_file}"]
     elif lang == SupportedLanguage.RUBY:
