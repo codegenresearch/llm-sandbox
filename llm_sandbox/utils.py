@@ -50,30 +50,40 @@ def get_code_file_extension(lang: str) -> str:
     :param lang: Programming language
     :return: File extension
     """
-    extensions = {
-        SupportedLanguage.PYTHON: "py",
-        SupportedLanguage.JAVA: "java",
-        SupportedLanguage.JAVASCRIPT: "js",
-        SupportedLanguage.CPP: "cpp",
-        SupportedLanguage.GO: "go",
-        SupportedLanguage.RUBY: "rb",
-    }
-    return extensions.get(lang, ValueError(f"Language {lang} is not supported"))
+    if lang == SupportedLanguage.PYTHON:
+        return "py"
+    elif lang == SupportedLanguage.JAVA:
+        return "java"
+    elif lang == SupportedLanguage.JAVASCRIPT:
+        return "js"
+    elif lang == SupportedLanguage.CPP:
+        return "cpp"
+    elif lang == SupportedLanguage.GO:
+        return "go"
+    elif lang == SupportedLanguage.RUBY:
+        return "rb"
+    else:
+        raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> str:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
     Get the command to execute the code
     :param lang: Programming language
     :param code_file: Path to the code file
-    :return: Execution command
+    :return: List of execution commands
     """
-    commands = {
-        SupportedLanguage.PYTHON: f"python {code_file}",
-        SupportedLanguage.JAVA: f"java {code_file}",
-        SupportedLanguage.JAVASCRIPT: f"node {code_file}",
-        SupportedLanguage.CPP: f"./{code_file}",
-        SupportedLanguage.GO: f"go run {code_file}",
-        SupportedLanguage.RUBY: f"ruby {code_file}",
-    }
-    return commands.get(lang, ValueError(f"Language {lang} is not supported"))
+    if lang == SupportedLanguage.PYTHON:
+        return ["python", code_file]
+    elif lang == SupportedLanguage.JAVA:
+        return ["java", code_file]
+    elif lang == SupportedLanguage.JAVASCRIPT:
+        return ["node", code_file]
+    elif lang == SupportedLanguage.CPP:
+        return ["./", code_file]
+    elif lang == SupportedLanguage.GO:
+        return ["go", "run", code_file]
+    elif lang == SupportedLanguage.RUBY:
+        return ["ruby", code_file]
+    else:
+        raise ValueError(f"Language {lang} is not supported")
