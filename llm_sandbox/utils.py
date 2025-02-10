@@ -22,7 +22,10 @@ def image_exists(client: DockerClient, image: str) -> bool:
         raise e
 
 
-def get_libraries_installation_command(lang: str, libraries: List[str]) -> Optional[str]:
+def get_libraries_installation_command(
+    lang: str,
+    libraries: List[str]
+) -> Optional[str]:
     """
     Get the command to install libraries for the given language.
 
@@ -69,7 +72,10 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> list:
+def get_code_execution_command(
+    lang: str,
+    code_file: str
+) -> list:
     """
     Get the command to execute the code.
 
