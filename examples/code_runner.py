@@ -56,7 +56,7 @@ def run_cpp_code():
             return 0;
         }
         """
-        output = session.run(code, libraries=["libstdc++"])
+        output = session.run(code)
         print(output)
 
         code = """
@@ -71,9 +71,10 @@ def run_cpp_code():
             return 0;
         }
         """
-        output = session.run(code, libraries=["libstdc++"])
+        output = session.run(code)
         print(output)
 
+        # run with libraries
         code = """
         #include <iostream>
         #include <vector>
