@@ -18,8 +18,8 @@ def image_exists(client: DockerClient, image: str) -> bool:
         return True
     except docker.errors.ImageNotFound:
         return False
-    except Exception:
-        raise
+    except Exception as e:
+        raise e
 
 
 def get_libraries_installation_command(lang: str, libraries: List[str]) -> Optional[str]:
