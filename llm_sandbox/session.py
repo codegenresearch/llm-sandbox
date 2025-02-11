@@ -147,11 +147,10 @@ class SandboxSession:
 
         self.copy_to_runtime(code_file, code_file)
         commands = get_code_execution_command(self.lang, code_file)
-        outputs = []
+        output = ""
         for command in commands:
             output = self.execute_command(command)
-            outputs.append(output)
-        return "\n".join(outputs)
+        return output
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -182,10 +181,10 @@ class SandboxSession:
             exists = self.execute_command(f"test -d {directory} && echo 'exists' || echo 'not exists'")
             if "not exists" in exists:
                 self.container.exec_run(f"mkdir -p {directory}")
+                if self.verbose:
+                    print(f"Creating directory {self.container.short_id}:{directory}")
 
         if self.verbose:
-            if directory:
-                print(f"Creating directory {self.container.short_id}:{directory}")
             print(f"Copying {src} to {self.container.short_id}:{dest}..")
 
         tarstream = io.BytesIO()
@@ -218,6 +217,9 @@ class SandboxSession:
             output += chunk_str
             if self.verbose:
                 print(chunk_str, end="")
+
+        if exit_code != 0:
+            raise RuntimeError(f"Command failed with exit code {exit_code}")
 
         return output
 
