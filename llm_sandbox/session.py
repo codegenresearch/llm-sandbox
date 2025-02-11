@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -126,7 +126,7 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None) -> Tuple[int, str]:
+    def run(self, code: str, libraries: Optional[List] = None):
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -146,9 +146,12 @@ class SandboxSession:
             f.write(code)
 
         self.copy_to_runtime(code_file, code_file)
-        execution_command = get_code_execution_command(self.lang, code_file)
-        exit_code, output = self.execute_command(execution_command)
-        return exit_code, output
+        commands = get_code_execution_command(self.lang, code_file)
+        outputs = []
+        for command in commands:
+            output = self.execute_command(command)
+            outputs.append(output)
+        return "\n".join(outputs)
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -175,7 +178,10 @@ class SandboxSession:
 
         directory = os.path.dirname(dest)
         if directory:
-            self.container.exec_run(f"mkdir -p {directory}")
+            # Check if the directory already exists
+            exists = self.execute_command(f"test -d {directory} && echo 'exists' || echo 'not exists'")
+            if "not exists" in exists:
+                self.container.exec_run(f"mkdir -p {directory}")
 
         if self.verbose:
             if directory:
@@ -189,7 +195,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]) -> Tuple[int, str]:
+    def execute_command(self, command: Optional[str]) -> str:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -213,7 +219,7 @@ class SandboxSession:
             if self.verbose:
                 print(chunk_str, end="")
 
-        return exit_code, output
+        return output
 
     def __enter__(self):
         self.open()
