@@ -6,11 +6,19 @@ def run_python_code():
         output = session.run("print('Hello, World!')")
         print(output)
 
-        output = session.run("import numpy as np\nprint(np.random.rand())", libraries=["numpy"])
+        code = """
+        import numpy as np
+        print(np.random.rand())
+        """
+        output = session.run(code, libraries=["numpy"])
         print(output)
 
         session.execute_command("pip install pandas")
-        output = session.run("import pandas as pd\nprint(pd.__version__)")
+        code = """
+        import pandas as pd
+        print(pd.__version__)
+        """
+        output = session.run(code)
         print(output)
 
         session.copy_to_runtime("README.md", "/sandbox/data.csv")
@@ -88,7 +96,7 @@ def run_cpp_code():
         """
         session.execute_command("g++ -o a.out -xc++ -")
         session.execute_command(code3)
-        output = session.run("./a.out", libraries=["libstdc++"])
+        output = session.run("./a.out")
         print(output)
 
 if __name__ == "__main__":
