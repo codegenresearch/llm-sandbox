@@ -1,9 +1,7 @@
 from llm_sandbox import SandboxSession
-import os
-from llm_sandbox.const import SupportedLanguage, DefaultImage
 
 def run_python_code():
-    with SandboxSession(lang=SupportedLanguage.PYTHON, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="python", keep_template=True, verbose=True) as session:
         output = session.run("print('Hello, World!')")
         print(output)
 
@@ -17,7 +15,7 @@ def run_python_code():
         session.copy_to_runtime("README.md", "/sandbox/data.csv")
 
 def run_java_code():
-    with SandboxSession(lang=SupportedLanguage.JAVA, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="java", keep_template=True, verbose=True) as session:
         output = session.run(
             """
             public class Main {
@@ -30,7 +28,7 @@ def run_java_code():
         print(output)
 
 def run_javascript_code():
-    with SandboxSession(lang=SupportedLanguage.JAVASCRIPT, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="javascript", keep_template=True, verbose=True) as session:
         output = session.run("console.log('Hello, World!')")
         print(output)
 
@@ -45,7 +43,7 @@ def run_javascript_code():
         print(output)
 
 def run_cpp_code():
-    with SandboxSession(lang=SupportedLanguage.CPP, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="cpp", keep_template=True, verbose=True) as session:
         output = session.run(
             """
             #include <iostream>
@@ -95,7 +93,7 @@ def run_cpp_code():
         session.copy_to_runtime("README.md", "/sandbox/data.csv")
 
 if __name__ == "__main__":
-    # run_python_code()
-    # run_java_code()
-    # run_javascript_code()
+    run_python_code()
+    run_java_code()
+    run_javascript_code()
     run_cpp_code()
