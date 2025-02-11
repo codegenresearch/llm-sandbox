@@ -6,7 +6,7 @@ def run_python_code():
         output = session.run("print('Hello, World!')")
         print(output)
 
-        output = session.run("import numpy as np\nprint(np.random.rand())")
+        output = session.run("import numpy as np\nprint(np.random.rand())", libraries=["numpy"])
         print(output)
 
         session.execute_command("pip install pandas")
@@ -38,7 +38,7 @@ def run_javascript_code():
             .then(response => console.log(response.data));
         """
         session.execute_command("yarn add axios")
-        output = session.run(code)
+        output = session.run(code, libraries=["axios"])
         print(output)
 
 def run_cpp_code():
@@ -88,11 +88,11 @@ def run_cpp_code():
         """
         session.execute_command("g++ -o a.out -xc++ -")
         session.execute_command(code3)
-        output = session.run("./a.out")
+        output = session.run("./a.out", libraries=["libstdc++"])
         print(output)
 
 if __name__ == "__main__":
-    # run_python_code()
-    # run_java_code()
-    # run_javascript_code()
+    run_python_code()
+    run_java_code()
+    run_javascript_code()
     run_cpp_code()
