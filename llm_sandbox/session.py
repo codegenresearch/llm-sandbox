@@ -12,12 +12,7 @@ from llm_sandbox.utils import (
     get_code_file_extension,
     get_code_execution_command,
 )
-from llm_sandbox.const import (
-    SupportedLanguage,
-    SupportedLanguageValues,
-    DefaultImage,
-    NotSupportedLibraryInstallation,
-)
+from llm_sandbox.const import SupportedLanguage, SupportedLanguageValues, DefaultImage, NotSupportedLibraryInstallation
 
 
 class SandboxSession:
@@ -126,7 +121,8 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None):
+    def run(self, code: str, libraries: Optional[List] = None) -> List[str]:
+        commands = []
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -139,6 +135,7 @@ class SandboxSession:
                 )
 
             command = get_libraries_installation_command(self.lang, libraries)
+            commands.append(command)
             self.execute_command(command)
 
         code_file = f"/tmp/code.{get_code_file_extension(self.lang)}"
@@ -146,13 +143,10 @@ class SandboxSession:
             f.write(code)
 
         self.copy_to_runtime(code_file, code_file)
-
-        output = ""
-        commands = get_code_execution_command(self.lang, code_file)
-        for command in commands:
-            output = self.execute_command(command)
-
-        return output
+        execution_command = get_code_execution_command(self.lang, code_file)
+        commands.append(execution_command)
+        result = self.execute_command(execution_command)
+        return commands
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -179,7 +173,7 @@ class SandboxSession:
 
         is_created_dir = False
         directory = os.path.dirname(dest)
-        if directory and not self.container.exec_run(f"test -d {directory}")[0] == 0:
+        if directory:
             self.container.exec_run(f"mkdir -p {directory}")
             is_created_dir = True
 
@@ -195,7 +189,7 @@ class SandboxSession:
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
 
-    def execute_command(self, command: Optional[str]):
+    def execute_command(self, command: Optional[str]) -> str:
         if not command:
             raise ValueError("Command cannot be empty")
 
@@ -227,3 +221,107 @@ class SandboxSession:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+def run_python_code():
+    with SandboxSession(lang="python", keep_template=True, verbose=True) as session:
+        commands = session.run("print('Hello, World!')")
+        print(commands)
+
+        commands = session.run(
+            "import numpy as np\nprint(np.random.rand())", libraries=["numpy"]
+        )
+        print(commands)
+
+        session.execute_command("pip install pandas")
+        commands = session.run("import pandas as pd\nprint(pd.__version__)")
+        print(commands)
+
+        session.copy_to_runtime("README.md", "/sandbox/data.csv")
+
+
+def run_java_code():
+    with SandboxSession(lang="java", keep_template=True, verbose=True) as session:
+        commands = session.run(
+            """
+            public class Main {
+                public static void main(String[] args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+            """,
+        )
+        print(commands)
+
+
+def run_javascript_code():
+    with SandboxSession(lang="javascript", keep_template=True, verbose=True) as session:
+        commands = session.run("console.log('Hello, World!')")
+        print(commands)
+
+        commands = session.run(
+            """
+            const axios = require('axios');
+            axios.get('https://jsonplaceholder.typicode.com/posts/1')
+                .then(response => console.log(response.data));
+            """,
+            libraries=["axios"],
+        )
+        print(commands)
+
+
+def run_cpp_code():
+    with SandboxSession(lang="cpp", keep_template=True, verbose=True) as session:
+        commands = session.run(
+            """
+            #include <iostream>
+            int main() {
+                std::cout << "Hello, World!" << std::endl;
+                return 0;
+            }
+            """,
+        )
+        print(commands)
+
+        commands = session.run(
+            """
+            #include <iostream>
+            #include <vector>
+            int main() {
+                std::vector<int> v = {1, 2, 3, 4, 5};
+                for (int i : v) {
+                    std::cout << i << " ";
+                }
+                std::cout << std::endl;
+                return 0;
+            }
+            """,
+        )
+        print(commands)
+
+        # run with libraries
+        commands = session.run(
+            """
+            #include <iostream>
+            #include <vector>
+            #include <algorithm>
+            int main() {
+                std::vector<int> v = {1, 2, 3, 4, 5};
+                std::reverse(v.begin(), v.end());
+                for (int i : v) {
+                    std::cout << i << " ";
+                }
+                std::cout << std::endl;
+                return 0;
+            }
+            """,
+            libraries=["libstdc++"],
+        )
+        print(commands)
+
+
+if __name__ == "__main__":
+    run_python_code()
+    run_java_code()
+    run_javascript_code()
+    run_cpp_code()
