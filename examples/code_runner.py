@@ -90,7 +90,7 @@ def run_cpp_code():
             return 0;
         }
         """)
-        output = session.run("./a.out", libraries=["libstdc++"])
+        output = session.run("./a.out")
         print(output)
 
 if __name__ == "__main__":
@@ -104,4 +104,4 @@ if __name__ == "__main__":
 1. **Output Handling**: Ensured that all `session.run` calls with multi-line code snippets are formatted as a single string.
 2. **Consistency in Code Blocks**: Passed the Java and C++ code snippets directly to `session.run` without assigning them to separate variables.
 3. **Library Specification**: Included the `libraries` parameter in the `session.run` call for the JavaScript code snippet that requires external libraries.
-4. **Code Formatting**: Ensured consistent use of triple quotes for multi-line strings and maintained uniform indentation and spacing throughout the code.
+4. **Code Formatting**: Ensured consistent use of triple quotes for multi-line strings and maintained uniform indentation and spacing throughout the code for better readability.
