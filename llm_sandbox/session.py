@@ -206,7 +206,11 @@ class SandboxSession:
         if self.verbose:
             print(f"Executing command: {command}")
 
-        exit_code, exec_log = self.container.exec_run(command, stream=True)
+        result = self.container.exec_run(command, stream=True)
+        if not isinstance(result, tuple) or len(result) != 2:
+            raise RuntimeError("Unexpected result from exec_run")
+
+        exit_code, exec_log = result
         output = ""
 
         if self.verbose:
