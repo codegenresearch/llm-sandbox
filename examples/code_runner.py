@@ -1,26 +1,22 @@
 from llm_sandbox import SandboxSession
-from llm_sandbox.utils import get_libraries_installation_command, get_code_execution_command, SupportedLanguage
-
-def run_code(session, code, libraries=None):
-    if libraries:
-        installation_command = get_libraries_installation_command(session.lang, libraries)
-        if installation_command:
-            session.execute_command(installation_command)
-    
-    execution_commands = get_code_execution_command(session.lang, code)
-    for command in execution_commands:
-        output = session.run(command)
-        print(output)
+from llm_sandbox.utils import get_libraries_installation_command, get_code_execution_command
 
 def run_python_code():
-    with SandboxSession(lang=SupportedLanguage.PYTHON, keep_template=True, verbose=True) as session:
-        run_code(session, "print('Hello, World!')")
-        run_code(session, "import numpy as np\nprint(np.random.rand())", libraries=["numpy"])
-        run_code(session, "import pandas as pd\nprint(pd.__version__)", libraries=["pandas"])
+    with SandboxSession(lang="python", keep_template=True, verbose=True) as session:
+        output = session.run("print('Hello, World!')")
+        print(output)
+
+        output = session.run("import numpy as np\nprint(np.random.rand())")
+        print(output)
+
+        session.execute_command("pip install pandas")
+        output = session.run("import pandas as pd\nprint(pd.__version__)")
+        print(output)
+
         session.copy_to_runtime("README.md", "/sandbox/data.csv")
 
 def run_java_code():
-    with SandboxSession(lang=SupportedLanguage.JAVA, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="java", keep_template=True, verbose=True) as session:
         code = """
         public class Main {
             public static void main(String[] args) {
@@ -28,20 +24,25 @@ def run_java_code():
             }
         }
         """
-        run_code(session, code)
+        output = session.run(code)
+        print(output)
 
 def run_javascript_code():
-    with SandboxSession(lang=SupportedLanguage.JAVASCRIPT, keep_template=True, verbose=True) as session:
-        run_code(session, "console.log('Hello, World!')")
+    with SandboxSession(lang="javascript", keep_template=True, verbose=True) as session:
+        output = session.run("console.log('Hello, World!')")
+        print(output)
+
         code = """
         const axios = require('axios');
         axios.get('https://jsonplaceholder.typicode.com/posts/1')
             .then(response => console.log(response.data));
         """
-        run_code(session, code, libraries=["axios"])
+        session.execute_command("yarn add axios")
+        output = session.run(code)
+        print(output)
 
 def run_cpp_code():
-    with SandboxSession(lang=SupportedLanguage.CPP, keep_template=True, verbose=True) as session:
+    with SandboxSession(lang="cpp", keep_template=True, verbose=True) as session:
         code1 = """
         #include <iostream>
         int main() {
@@ -49,8 +50,11 @@ def run_cpp_code():
             return 0;
         }
         """
-        run_code(session, code1)
-        
+        session.execute_command("g++ -o a.out -xc++ -")
+        session.execute_command(code1)
+        output = session.run("./a.out")
+        print(output)
+
         code2 = """
         #include <iostream>
         #include <vector>
@@ -63,8 +67,11 @@ def run_cpp_code():
             return 0;
         }
         """
-        run_code(session, code2)
-        
+        session.execute_command("g++ -o a.out -xc++ -")
+        session.execute_command(code2)
+        output = session.run("./a.out")
+        print(output)
+
         code3 = """
         #include <iostream>
         #include <vector>
@@ -79,7 +86,10 @@ def run_cpp_code():
             return 0;
         }
         """
-        run_code(session, code3, libraries=["libstdc++"])
+        session.execute_command("g++ -o a.out -xc++ -")
+        session.execute_command(code3)
+        output = session.run("./a.out")
+        print(output)
 
 if __name__ == "__main__":
     # run_python_code()
