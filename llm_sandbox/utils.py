@@ -1,9 +1,9 @@
 import docker
 import docker.errors
 from typing import List, Optional
-
+import os
 from docker import DockerClient
-from llm_sandbox.const import SupportedLanguage
+from llm_sandbox.const import SupportedLanguage, DefaultImage
 
 
 def image_exists(client: DockerClient, image: str) -> bool:
@@ -38,7 +38,7 @@ def get_libraries_installation_command(
     elif lang == SupportedLanguage.JAVASCRIPT:
         return f"yarn add {' '.join(libraries)}"
     elif lang == SupportedLanguage.CPP:
-        return f"apt-get install {' '.join(libraries)}"
+        return f"apt-get update && apt-get install -y {' '.join(libraries)}"
     elif lang == SupportedLanguage.GO:
         return f"go get {' '.join(libraries)}"
     elif lang == SupportedLanguage.RUBY:
@@ -69,24 +69,94 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> list:
+def get_code_execution_command(lang: str, code_file: str) -> str:
     """
-    Return the execution command for the given language and code file.
-    :param lang: Language of the code
+    Get the command to execute the code
+    :param lang: Programming language
     :param code_file: Path to the code file
-    :return: List of execution commands
+    :return: Execution command
     """
     if lang == SupportedLanguage.PYTHON:
-        return [f"python {code_file}"]
+        return f"python {code_file}"
     elif lang == SupportedLanguage.JAVA:
-        return [f"java {code_file}"]
+        return f"javac {code_file} && java {'.'.join(code_file.split('.')[:-1])}"
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return [f"node {code_file}"]
+        return f"node {code_file}"
     elif lang == SupportedLanguage.CPP:
-        return [f"g++ -o a.out {code_file}", "./a.out"]
+        return f"g++ {code_file} -o {code_file.split('.')[0]} && ./{code_file.split('.')[0]}"
     elif lang == SupportedLanguage.GO:
-        return [f"go run {code_file}"]
+        return f"go run {code_file}"
     elif lang == SupportedLanguage.RUBY:
-        return [f"ruby {code_file}"]
+        return f"ruby {code_file}"
     else:
         raise ValueError(f"Language {lang} is not supported")
+
+
+def run_code_in_docker(lang: str, code: str, libraries: List[str] = None):
+    client = docker.from_env()
+    image = DefaultImage.__dict__.get(lang.upper())
+    if not image:
+        raise ValueError(f"Default image for language {lang} is not defined")
+
+    if not image_exists(client, image):
+        print(f"Pulling image {image}...")
+        client.images.pull(image)
+
+    code_file_extension = get_code_file_extension(lang)
+    code_file_name = f"code.{code_file_extension}"
+    code_file_path = f"/sandbox/{code_file_name}"
+
+    commands = []
+    if libraries and lang not in NotSupportedLibraryInstallation:
+        install_command = get_libraries_installation_command(lang, libraries)
+        commands.append(install_command)
+
+    if lang == SupportedLanguage.JAVA:
+        # Java needs to compile the code before running
+        commands.append(f"echo '{code}' > {code_file_path}")
+        commands.append(get_code_execution_command(lang, code_file_name))
+    else:
+        commands.append(f"echo '{code}' > {code_file_path}")
+        commands.append(get_code_execution_command(lang, code_file_name))
+
+    command = " && ".join(commands)
+
+    container = client.containers.run(
+        image,
+        command,
+        volumes={os.getcwd(): {'bind': '/sandbox', 'mode': 'rw'}},
+        remove=True,
+        stdout=True,
+        stderr=True,
+        detach=False
+    )
+
+    output = container.decode('utf-8')
+    print(output)
+
+
+if __name__ == "__main__":
+    run_code_in_docker("python", "print('Hello, World!')")
+    run_code_in_docker("java", """
+    public class Main {
+        public static void main(String[] args) {
+            System.out.println("Hello, World!");
+        }
+    }
+    """)
+    run_code_in_docker("javascript", "console.log('Hello, World!')")
+    run_code_in_docker("cpp", """
+    #include <iostream>
+    int main() {
+        std::cout << "Hello, World!" << std::endl;
+        return 0;
+    }
+    """)
+    run_code_in_docker("go", """
+    package main
+    import "fmt"
+    func main() {
+        fmt.Println("Hello, World!")
+    }
+    """)
+    run_code_in_docker("ruby", "puts 'Hello, World!'")
