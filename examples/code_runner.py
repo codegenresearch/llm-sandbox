@@ -5,10 +5,7 @@ def run_python_code():
         output = session.run("print('Hello, World!')")
         print(output)
 
-        output = session.run(
-            "import numpy as np\nprint(np.random.rand())",
-            libraries=["numpy"]
-        )
+        output = session.run("import numpy as np\nprint(np.random.rand())", libraries=["numpy"])
         print(output)
 
         session.execute_command("pip install pandas")
