@@ -2,7 +2,7 @@ import io
 import os
 import docker
 import tarfile
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 from docker.models.images import Image
 from docker.models.containers import Container
@@ -12,7 +12,12 @@ from llm_sandbox.utils import (
     get_code_file_extension,
     get_code_execution_command,
 )
-from llm_sandbox.const import SupportedLanguage, SupportedLanguageValues, DefaultImage, NotSupportedLibraryInstallation
+from llm_sandbox.const import (
+    SupportedLanguage,
+    SupportedLanguageValues,
+    DefaultImage,
+    NotSupportedLibraryInstallation,
+)
 
 
 class SandboxSession:
@@ -121,8 +126,7 @@ class SandboxSession:
                         f"Image {self.image.tags[-1]} is in use by other containers. Skipping removal.."
                     )
 
-    def run(self, code: str, libraries: Optional[List] = None) -> List[str]:
-        commands = []
+    def run(self, code: str, libraries: Optional[List] = None) -> Tuple[int, str]:
         if not self.container:
             raise RuntimeError(
                 "Session is not open. Please call open() method before running code."
@@ -135,7 +139,6 @@ class SandboxSession:
                 )
 
             command = get_libraries_installation_command(self.lang, libraries)
-            commands.append(command)
             self.execute_command(command)
 
         code_file = f"/tmp/code.{get_code_file_extension(self.lang)}"
@@ -144,9 +147,8 @@ class SandboxSession:
 
         self.copy_to_runtime(code_file, code_file)
         execution_command = get_code_execution_command(self.lang, code_file)
-        commands.append(execution_command)
-        result = self.execute_command(execution_command)
-        return commands
+        output = self.execute_command(execution_command)
+        return 0, output
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -171,14 +173,12 @@ class SandboxSession:
                 "Session is not open. Please call open() method before copying files."
             )
 
-        is_created_dir = False
         directory = os.path.dirname(dest)
         if directory:
             self.container.exec_run(f"mkdir -p {directory}")
-            is_created_dir = True
 
         if self.verbose:
-            if is_created_dir:
+            if directory:
                 print(f"Creating directory {self.container.short_id}:{directory}")
             print(f"Copying {src} to {self.container.short_id}:{dest}..")
 
@@ -225,24 +225,24 @@ class SandboxSession:
 
 def run_python_code():
     with SandboxSession(lang="python", keep_template=True, verbose=True) as session:
-        commands = session.run("print('Hello, World!')")
-        print(commands)
+        output = session.run("print('Hello, World!')")
+        print(output)
 
-        commands = session.run(
+        output = session.run(
             "import numpy as np\nprint(np.random.rand())", libraries=["numpy"]
         )
-        print(commands)
+        print(output)
 
         session.execute_command("pip install pandas")
-        commands = session.run("import pandas as pd\nprint(pd.__version__)")
-        print(commands)
+        output = session.run("import pandas as pd\nprint(pd.__version__)")
+        print(output)
 
         session.copy_to_runtime("README.md", "/sandbox/data.csv")
 
 
 def run_java_code():
     with SandboxSession(lang="java", keep_template=True, verbose=True) as session:
-        commands = session.run(
+        output = session.run(
             """
             public class Main {
                 public static void main(String[] args) {
@@ -251,15 +251,15 @@ def run_java_code():
             }
             """,
         )
-        print(commands)
+        print(output)
 
 
 def run_javascript_code():
     with SandboxSession(lang="javascript", keep_template=True, verbose=True) as session:
-        commands = session.run("console.log('Hello, World!')")
-        print(commands)
+        output = session.run("console.log('Hello, World!')")
+        print(output)
 
-        commands = session.run(
+        output = session.run(
             """
             const axios = require('axios');
             axios.get('https://jsonplaceholder.typicode.com/posts/1')
@@ -267,12 +267,12 @@ def run_javascript_code():
             """,
             libraries=["axios"],
         )
-        print(commands)
+        print(output)
 
 
 def run_cpp_code():
     with SandboxSession(lang="cpp", keep_template=True, verbose=True) as session:
-        commands = session.run(
+        output = session.run(
             """
             #include <iostream>
             int main() {
@@ -281,9 +281,9 @@ def run_cpp_code():
             }
             """,
         )
-        print(commands)
+        print(output)
 
-        commands = session.run(
+        output = session.run(
             """
             #include <iostream>
             #include <vector>
@@ -297,10 +297,10 @@ def run_cpp_code():
             }
             """,
         )
-        print(commands)
+        print(output)
 
         # run with libraries
-        commands = session.run(
+        output = session.run(
             """
             #include <iostream>
             #include <vector>
@@ -317,7 +317,7 @@ def run_cpp_code():
             """,
             libraries=["libstdc++"],
         )
-        print(commands)
+        print(output)
 
 
 if __name__ == "__main__":
