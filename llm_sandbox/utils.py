@@ -30,19 +30,19 @@ def get_libraries_installation_command(lang: str, libraries: List[str]) -> Optio
     :return: Installation command
     """
     if lang == SupportedLanguage.PYTHON:
-        return f"pip install {' '.join(libraries)}"
+        return "pip install " + " ".join(libraries)
     elif lang == SupportedLanguage.JAVA:
-        return f"mvn install:install-file -Dfile={' '.join(libraries)}"
+        return "mvn install:install-file -Dfile=" + " ".join(libraries)
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return f"yarn add {' '.join(libraries)}"
+        return "yarn add " + " ".join(libraries)
     elif lang == SupportedLanguage.CPP:
-        return f"apt-get install {' '.join(libraries)}"
+        return "apt-get install " + " ".join(libraries)
     elif lang == SupportedLanguage.GO:
-        return f"go get {' '.join(libraries)}"
+        return "go get " + " ".join(libraries)
     elif lang == SupportedLanguage.RUBY:
-        return f"gem install {' '.join(libraries)}"
+        return "gem install " + " ".join(libraries)
     else:
-        raise ValueError(f"Language {lang} is not supported")
+        raise ValueError("Language " + lang + " is not supported")
 
 
 def get_code_file_extension(lang: str) -> str:
@@ -64,10 +64,10 @@ def get_code_file_extension(lang: str) -> str:
     elif lang == SupportedLanguage.RUBY:
         return "rb"
     else:
-        raise ValueError(f"Language {lang} is not supported")
+        raise ValueError("Language " + lang + " is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> List[str]:
+def get_code_execution_command(lang: str, code_file: str) -> list:
     """
     Get the commands to execute the code
     :param lang: Programming language
@@ -75,19 +75,20 @@ def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     :return: List of execution commands
     """
     if lang == SupportedLanguage.PYTHON:
-        return [f"python {code_file}"]
+        return ["python " + code_file]
     elif lang == SupportedLanguage.JAVA:
-        return [f"javac {code_file}", f"java {'.'.join(code_file.split('.')[:-1])}"]
+        class_name = code_file.split(".")[0]
+        return ["javac " + code_file, "java " + class_name]
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return [f"node {code_file}"]
+        return ["node " + code_file]
     elif lang == SupportedLanguage.CPP:
-        return [f"g++ -o a.out {code_file}", "./a.out"]
+        return ["g++ -o a.out " + code_file, "./a.out"]
     elif lang == SupportedLanguage.GO:
-        return [f"go run {code_file}"]
+        return ["go run " + code_file]
     elif lang == SupportedLanguage.RUBY:
-        return [f"ruby {code_file}"]
+        return ["ruby " + code_file]
     else:
-        raise ValueError(f"Language {lang} is not supported")
+        raise ValueError("Language " + lang + " is not supported")
 
 
 def verify_directory_exists(client: DockerClient, container_id: str, directory: str) -> bool:
@@ -99,7 +100,7 @@ def verify_directory_exists(client: DockerClient, container_id: str, directory: 
     :return: True if the directory exists, False otherwise
     """
     try:
-        exec_command = f"test -d {directory}"
+        exec_command = "test -d " + directory
         exec_id = client.containers.get(container_id).exec_run(exec_command)
         return exec_id.exit_code == 0
     except Exception as e:
