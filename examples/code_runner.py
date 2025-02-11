@@ -71,6 +71,7 @@ def run_cpp_code():
         )
         print(output)
 
+        # Running with additional libraries
         output = session.run(
             """
             #include <iostream>
