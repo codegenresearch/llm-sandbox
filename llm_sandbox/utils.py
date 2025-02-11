@@ -22,9 +22,7 @@ def image_exists(client: DockerClient, image: str) -> bool:
         raise e
 
 
-def get_libraries_installation_command(
-    lang: str, libraries: List[str]
-) -> Optional[str]:
+def get_libraries_installation_command(lang: str, libraries: List[str]) -> Optional[str]:
     """
     Get the command to install libraries for the given language
     :param lang: Programming language
@@ -69,24 +67,40 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> list:
+def get_code_execution_command(lang: str, code_file: str) -> str:
     """
-    Return the execution command for the given language and code file.
-    :param lang: Language of the code
+    Get the command to execute the code
+    :param lang: Programming language
     :param code_file: Path to the code file
-    :return: List of execution commands
+    :return: Execution command
     """
     if lang == SupportedLanguage.PYTHON:
-        return [f"python {code_file}"]
+        return f"python {code_file}"
     elif lang == SupportedLanguage.JAVA:
-        return [f"java {code_file}"]
+        return f"java {code_file}"
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return [f"node {code_file}"]
+        return f"node {code_file}"
     elif lang == SupportedLanguage.CPP:
-        return [f"g++ -o a.out {code_file}", "./a.out"]
+        return f"./{code_file}"
     elif lang == SupportedLanguage.GO:
-        return [f"go run {code_file}"]
+        return f"go run {code_file}"
     elif lang == SupportedLanguage.RUBY:
-        return [f"ruby {code_file}"]
+        return f"ruby {code_file}"
     else:
         raise ValueError(f"Language {lang} is not supported")
+
+
+def verify_directory_exists(client: DockerClient, container_id: str, directory: str) -> bool:
+    """
+    Verify if a directory exists in the container
+    :param client: Docker client
+    :param container_id: Container ID
+    :param directory: Directory path to verify
+    :return: True if the directory exists, False otherwise
+    """
+    try:
+        exec_command = f"test -d {directory}"
+        exec_id = client.containers.get(container_id).exec_run(exec_command)
+        return exec_id.exit_code == 0
+    except Exception as e:
+        raise e
