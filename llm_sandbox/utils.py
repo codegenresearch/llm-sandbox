@@ -1,5 +1,4 @@
 import docker
-import docker.errors
 from typing import List, Optional
 import os
 from docker import DockerClient
@@ -67,12 +66,12 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> list:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
     Get the command to execute the code.
     :param lang: Programming language.
     :param code_file: Path to the code file.
-    :return: Execution command.
+    :return: List of execution commands.
     """
     if lang == SupportedLanguage.PYTHON:
         return [f"python {code_file}"]
