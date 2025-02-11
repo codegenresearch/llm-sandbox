@@ -24,14 +24,13 @@ def run_python_code():
 
 def run_java_code():
     with SandboxSession(lang="java", keep_template=True, verbose=True) as session:
-        code = """
+        output = session.run("""
         public class Main {
             public static void main(String[] args) {
                 System.out.println("Hello, World!");
             }
         }
-        """
-        output = session.run(code)
+        """)
         print(output)
 
 def run_javascript_code():
@@ -39,30 +38,29 @@ def run_javascript_code():
         output = session.run("console.log('Hello, World!')")
         print(output)
 
-        code = """
+        session.execute_command("yarn add axios")
+        output = session.run("""
         const axios = require('axios');
         axios.get('https://jsonplaceholder.typicode.com/posts/1')
             .then(response => console.log(response.data));
-        """
-        session.execute_command("yarn add axios")
-        output = session.run(code, libraries=["axios"])
+        """, libraries=["axios"])
         print(output)
 
 def run_cpp_code():
     with SandboxSession(lang="cpp", keep_template=True, verbose=True) as session:
-        code1 = """
+        session.execute_command("g++ -o a.out -xc++ -")
+        session.execute_command("""
         #include <iostream>
         int main() {
             std::cout << "Hello, World!" << std::endl;
             return 0;
         }
-        """
-        session.execute_command("g++ -o a.out -xc++ -")
-        session.execute_command(code1)
+        """)
         output = session.run("./a.out")
         print(output)
 
-        code2 = """
+        session.execute_command("g++ -o a.out -xc++ -")
+        session.execute_command("""
         #include <iostream>
         #include <vector>
         int main() {
@@ -73,13 +71,12 @@ def run_cpp_code():
             std::cout << std::endl;
             return 0;
         }
-        """
-        session.execute_command("g++ -o a.out -xc++ -")
-        session.execute_command(code2)
+        """)
         output = session.run("./a.out")
         print(output)
 
-        code3 = """
+        session.execute_command("g++ -o a.out -xc++ -")
+        session.execute_command("""
         #include <iostream>
         #include <vector>
         #include <algorithm>
@@ -92,9 +89,7 @@ def run_cpp_code():
             std::cout << std::endl;
             return 0;
         }
-        """
-        session.execute_command("g++ -o a.out -xc++ -")
-        session.execute_command(code3)
+        """)
         output = session.run("./a.out", libraries=["libstdc++"])
         print(output)
 
@@ -107,6 +102,6 @@ if __name__ == "__main__":
 
 ### Changes Made:
 1. **Output Handling**: Combined import statements and print statements into a single string for the `session.run` calls in Python.
-2. **Consistency in Code Blocks**: Passed the Java and C++ code snippets directly to `session.run` without separate variable assignments.
+2. **Consistency in Code Blocks**: Passed the Java and C++ code snippets directly to `session.run` without assigning them to separate variables first.
 3. **Library Specification**: Included the `libstdc++` library in the `session.run` call for the last C++ code snippet.
 4. **Code Formatting**: Ensured consistent use of triple quotes for multi-line strings and maintained consistent indentation and spacing.
