@@ -3,7 +3,7 @@ import docker.errors
 from typing import List, Optional
 import os
 from docker import DockerClient
-from llm_sandbox.const import SupportedLanguage, DefaultImage
+from llm_sandbox.const import SupportedLanguage, DefaultImage, NotSupportedLibraryInstallation
 
 
 def image_exists(client: DockerClient, image: str) -> bool:
@@ -38,7 +38,7 @@ def get_libraries_installation_command(
     elif lang == SupportedLanguage.JAVASCRIPT:
         return f"yarn add {' '.join(libraries)}"
     elif lang == SupportedLanguage.CPP:
-        return f"apt-get update && apt-get install -y {' '.join(libraries)}"
+        return f"apt-get install {' '.join(libraries)}"
     elif lang == SupportedLanguage.GO:
         return f"go get {' '.join(libraries)}"
     elif lang == SupportedLanguage.RUBY:
@@ -69,25 +69,27 @@ def get_code_file_extension(lang: str) -> str:
         raise ValueError(f"Language {lang} is not supported")
 
 
-def get_code_execution_command(lang: str, code_file: str) -> str:
+def get_code_execution_command(lang: str, code_file: str) -> List[str]:
     """
     Get the command to execute the code
     :param lang: Programming language
     :param code_file: Path to the code file
-    :return: Execution command
+    :return: Execution command as a list
     """
     if lang == SupportedLanguage.PYTHON:
-        return f"python {code_file}"
+        return [f"python {code_file}"]
     elif lang == SupportedLanguage.JAVA:
-        return f"javac {code_file} && java {'.'.join(code_file.split('.')[:-1])}"
+        class_name = code_file.split('.')[0]
+        return [f"javac {code_file}", f"java {class_name}"]
     elif lang == SupportedLanguage.JAVASCRIPT:
-        return f"node {code_file}"
+        return [f"node {code_file}"]
     elif lang == SupportedLanguage.CPP:
-        return f"g++ {code_file} -o {code_file.split('.')[0]} && ./{code_file.split('.')[0]}"
+        executable_name = code_file.split('.')[0]
+        return [f"g++ {code_file} -o {executable_name}", f"./{executable_name}"]
     elif lang == SupportedLanguage.GO:
-        return f"go run {code_file}"
+        return [f"go run {code_file}"]
     elif lang == SupportedLanguage.RUBY:
-        return f"ruby {code_file}"
+        return [f"ruby {code_file}"]
     else:
         raise ValueError(f"Language {lang} is not supported")
 
@@ -111,13 +113,7 @@ def run_code_in_docker(lang: str, code: str, libraries: List[str] = None):
         install_command = get_libraries_installation_command(lang, libraries)
         commands.append(install_command)
 
-    if lang == SupportedLanguage.JAVA:
-        # Java needs to compile the code before running
-        commands.append(f"echo '{code}' > {code_file_path}")
-        commands.append(get_code_execution_command(lang, code_file_name))
-    else:
-        commands.append(f"echo '{code}' > {code_file_path}")
-        commands.append(get_code_execution_command(lang, code_file_name))
+    commands.extend(get_code_execution_command(lang, code_file_name))
 
     command = " && ".join(commands)
 
