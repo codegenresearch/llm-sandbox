@@ -12,12 +12,7 @@ from llm_sandbox.utils import (
     get_code_file_extension,
     get_code_execution_command,
 )
-from llm_sandbox.const import (
-    SupportedLanguage,
-    SupportedLanguageValues,
-    DefaultImage,
-    NotSupportedLibraryInstallation,
-)
+from llm_sandbox.const import SupportedLanguage, SupportedLanguageValues, DefaultImage, NotSupportedLibraryInstallation
 
 
 class SandboxSession:
@@ -29,14 +24,7 @@ class SandboxSession:
         keep_template: bool = False,
         verbose: bool = True,
     ):
-        """
-        Create a new sandbox session
-        :param image: Docker image to use
-        :param dockerfile: Path to the Dockerfile, if image is not provided
-        :param lang: Language of the code
-        :param keep_template: if True, the image and container will not be removed after the session ends
-        :param verbose: if True, print messages
-        """
+        """\n        Create a new sandbox session\n        :param image: Docker image to use\n        :param dockerfile: Path to the Dockerfile, if image is not provided\n        :param lang: Language of the code\n        :param keep_template: if True, the image and container will not be removed after the session ends\n        :param verbose: if True, print messages\n        """
         if image and dockerfile:
             raise ValueError("Only one of image or dockerfile should be provided")
 
@@ -57,6 +45,7 @@ class SandboxSession:
         self.keep_template = keep_template
         self.is_create_template: bool = False
         self.verbose = verbose
+        self.commands: List[str] = []
 
     def open(self):
         warning_str = (
@@ -76,6 +65,7 @@ class SandboxSession:
                 tag="sandbox",
             )
             self.is_create_template = True
+            self.commands.append(f"docker build -t sandbox {self.path}")
 
         if isinstance(self.image, str):
             if not image_exists(self.client, self.image):
@@ -86,12 +76,14 @@ class SandboxSession:
 
                 self.image = self.client.images.pull(self.image)
                 self.is_create_template = True
+                self.commands.append(f"docker pull {self.image}")
             else:
                 self.image = self.client.images.get(self.image)
                 if self.verbose:
                     print(f"Using image {self.image.tags[-1]}")
 
         self.container = self.client.containers.run(self.image, detach=True, tty=True)
+        self.commands.append(f"docker run -d -t {self.image}")
 
     def close(self):
         if self.container:
@@ -100,6 +92,7 @@ class SandboxSession:
 
             self.container.remove(force=True)
             self.container = None
+            self.commands.append(f"docker rm -f {self.container.short_id}")
 
         if self.is_create_template and not self.keep_template:
             # check if the image is used by any other container
@@ -120,6 +113,7 @@ class SandboxSession:
                     self.image.remove(force=True)
                 else:
                     raise ValueError("Invalid image type")
+                self.commands.append(f"docker rmi {self.image}")
             else:
                 if self.verbose:
                     print(
@@ -146,13 +140,10 @@ class SandboxSession:
             f.write(code)
 
         self.copy_to_runtime(code_file, code_file)
-
-        output = ""
-        commands = get_code_execution_command(self.lang, code_file)
-        for command in commands:
-            output = self.execute_command(command)
-
-        return output
+        command = get_code_execution_command(self.lang, code_file)
+        result = self.execute_command(command)
+        self.commands.append(command)
+        return result
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -171,6 +162,8 @@ class SandboxSession:
         with tarfile.open(fileobj=tarstream, mode="r") as tar:
             tar.extractall(os.path.dirname(dest))
 
+        self.commands.append(f"docker cp {self.container.short_id}:{src} {dest}")
+
     def copy_to_runtime(self, src: str, dest: str):
         if not self.container:
             raise RuntimeError(
@@ -179,9 +172,10 @@ class SandboxSession:
 
         is_created_dir = False
         directory = os.path.dirname(dest)
-        if directory and not self.container.exec_run(f"test -d {directory}")[0] == 0:
+        if directory:
             self.container.exec_run(f"mkdir -p {directory}")
             is_created_dir = True
+            self.commands.append(f"docker exec {self.container.short_id} mkdir -p {directory}")
 
         if self.verbose:
             if is_created_dir:
@@ -194,6 +188,8 @@ class SandboxSession:
 
         tarstream.seek(0)
         self.container.put_archive(os.path.dirname(dest), tarstream)
+
+        self.commands.append(f"docker cp {src} {self.container.short_id}:{dest}")
 
     def execute_command(self, command: Optional[str]):
         if not command:
@@ -227,3 +223,57 @@ class SandboxSession:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    def get_commands(self) -> List[str]:
+        return self.commands
+
+
+def compile_cpp_code(code: str) -> List[str]:
+    code_file = "/tmp/code.cpp"
+    with open(code_file, "w") as f:
+        f.write(code)
+
+    compile_command = f"g++ -o /tmp/code {code_file}"
+    return [compile_command]
+
+
+def run_cpp_code():
+    with SandboxSession(lang="cpp", keep_template=True, verbose=True) as session:
+        code = """\n        #include <iostream>\n        int main() {\n            std::cout << "Hello, World!" << std::endl;\n            return 0;\n        }\n        """
+        compile_commands = compile_cpp_code(code)
+        for command in compile_commands:
+            session.execute_command(command)
+
+        run_command = "./code"
+        session.execute_command(run_command)
+        output = session.execute_command(run_command)
+        print(output)
+
+        code = """\n        #include <iostream>\n        #include <vector>\n        int main() {\n            std::vector<int> v = {1, 2, 3, 4, 5};\n            for (int i : v) {\n                std::cout << i << " ";\n            }\n            std::cout << std::endl;\n            return 0;\n        }\n        """
+        compile_commands = compile_cpp_code(code)
+        for command in compile_commands:
+            session.execute_command(command)
+
+        run_command = "./code"
+        session.execute_command(run_command)
+        output = session.execute_command(run_command)
+        print(output)
+
+        code = """\n        #include <iostream>\n        #include <vector>\n        #include <algorithm>\n        int main() {\n            std::vector<int> v = {1, 2, 3, 4, 5};\n            std::reverse(v.begin(), v.end());\n            for (int i : v) {\n                std::cout << i << " ";\n            }\n            std::cout << std::endl;\n            return 0;\n        }\n        """
+        compile_commands = compile_cpp_code(code)
+        for command in compile_commands:
+            session.execute_command(command)
+
+        run_command = "./code"
+        session.execute_command(run_command)
+        output = session.execute_command(run_command)
+        print(output)
+
+        print(session.get_commands())
+
+
+if __name__ == "__main__":
+    run_python_code()
+    run_java_code()
+    run_javascript_code()
+    run_cpp_code()
