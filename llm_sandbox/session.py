@@ -12,12 +12,7 @@ from llm_sandbox.utils import (
     get_code_file_extension,
     get_code_execution_command,
 )
-from llm_sandbox.const import (
-    SupportedLanguage,
-    SupportedLanguageValues,
-    DefaultImage,
-    NotSupportedLibraryInstallation,
-)
+from llm_sandbox.const import SupportedLanguage, SupportedLanguageValues, DefaultImage, NotSupportedLibraryInstallation
 
 
 class SandboxSession:
@@ -29,14 +24,7 @@ class SandboxSession:
         keep_template: bool = False,
         verbose: bool = True,
     ):
-        """
-        Create a new sandbox session
-        :param image: Docker image to use
-        :param dockerfile: Path to the Dockerfile, if image is not provided
-        :param lang: Language of the code
-        :param keep_template: if True, the image and container will not be removed after the session ends
-        :param verbose: if True, print messages
-        """
+        """\n        Create a new sandbox session\n        :param image: Docker image to use\n        :param dockerfile: Path to the Dockerfile, if image is not provided\n        :param lang: Language of the code\n        :param keep_template: if True, the image and container will not be removed after the session ends\n        :param verbose: if True, print messages\n        """
         if image and dockerfile:
             raise ValueError("Only one of image or dockerfile should be provided")
 
@@ -146,13 +134,8 @@ class SandboxSession:
             f.write(code)
 
         self.copy_to_runtime(code_file, code_file)
-
-        output = ""
-        commands = get_code_execution_command(self.lang, code_file)
-        for command in commands:
-            output = self.execute_command(command)
-
-        return output
+        result = self.execute_command(get_code_execution_command(self.lang, code_file))
+        return result
 
     def copy_from_runtime(self, src: str, dest: str):
         if not self.container:
@@ -179,7 +162,7 @@ class SandboxSession:
 
         is_created_dir = False
         directory = os.path.dirname(dest)
-        if directory and not self.container.exec_run(f"test -d {directory}")[0] == 0:
+        if directory:
             self.container.exec_run(f"mkdir -p {directory}")
             is_created_dir = True
 
